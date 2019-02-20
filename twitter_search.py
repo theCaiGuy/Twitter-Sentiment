@@ -19,7 +19,7 @@ initial_queries = {'weinstein': 'q="harvey weinstein" since:2017-10-01 until:201
 results = {k: [] for k in initial_queries.keys()}
 
 for (name, query) in initial_queries.items():
-	results[name] = api.GetSearch(term=name)
+	results[name] = [result.text for result in api.GetSearch(term=name)]
 
 	# The following line will run properly once we get our Premium Search API account approved, but for now we substitute the above
 	#results[name] = api.GetSearch(raw_query=query)
