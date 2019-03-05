@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 full_data_path = './data/training.1600000.processed.noemoticon.csv'
 
-total_size = sum(1 for line in open(partial_data_path, encoding = 'latin-1')) - 1
+total_size = sum(1 for line in open(full_data_path, encoding = 'latin-1')) - 1
 
 train_n = 320
 train_skip = [x for x in range(1, total_size) if x % train_n != 0]
