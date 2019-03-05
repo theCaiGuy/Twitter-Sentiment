@@ -58,7 +58,7 @@ N_EPOCHS = 4000
 # torch.backends.cudnn.deterministic = True
 
 
-PATH = './data/Data-mini/train_mini.csv'
+PATH = './data/training.1600000.processed.noemoticon.csv'
 MODEL_PATH = './model_cache/cache'
 
 
@@ -96,7 +96,8 @@ def build_embeddings(tok2id, char_vectors):
 
 
 def load_datasets(path):
-    full_data = pd.read_csv(path, encoding = 'latin-1')
+    print ("Loading dataset...")
+    full_data = pd.read_csv(path, encoding = 'latin-1', names = ["Pos_Neg", "ID", "Date", "QUERY", "User", "Content"])
     full_n = full_data.shape[0]
     #print (train_data)
 
@@ -110,6 +111,7 @@ def load_datasets(path):
     dev_y = [0.0 if y == 0 else 1.0 for y in dev_data.loc[:]["Pos_Neg"]]
     #print (dev_y)
 
+    print ("Loading character vectors...")
     char_vectors = {}
     for line in open('./glove.6B/glove.6B.100d.txt').readlines():
         sp = line.strip().split()
@@ -127,6 +129,7 @@ def load_datasets(path):
     tok2id[UNK] = len(tok2id)
     tok2id[PAD] = len(tok2id)
 
+    print ("Generating dataset objects...")
     train_x = vectorize(train_x_raw, tok2id)
 
     dev_x = vectorize(dev_x_raw, tok2id)
@@ -168,7 +171,6 @@ def train(model, train_loader, optimizer, criterion):
         #train_y = batch['label'].long()
         if train_x.shape[1] == 1: continue
         #print (train_y.view(-1).shape)
-
         predictions = model.forward(train_x).squeeze(1)
         #print (predictions.shape)
         loss = criterion(predictions, train_y)
@@ -199,14 +201,10 @@ def evaluate(model, dev_loader, criterion):
             dev_x = torch.stack(batch['content'])
             #print (train_x)
             dev_y = batch['label'].float()
-
             predictions = model(dev_x).squeeze(1)
             #print (torch.round(predictions))
-
             loss = criterion(predictions, dev_y)
-
             acc = binary_accuracy(predictions, dev_y)
-
             epoch_loss += loss.item()
             epoch_acc += acc.item()
 
@@ -216,46 +214,38 @@ def evaluate(model, dev_loader, criterion):
 
 def train_model(train_dataset, dev_dataset, embeddings_matrix):
     CNN_model = DeepCNN(embeddings_matrix)
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
     optimizer = optim.Adam(CNN_model.parameters())
-
     criterion = nn.BCEWithLogitsLoss()
-
     CNN_model = CNN_model.to(device)
-
     criterion = criterion.to(device)
 
     train_loader = DataLoader(train_dataset,
                           batch_size=128,
                           shuffle=True,
                           num_workers=4
-                         # pin_memory=True # CUDA only
                          )
 
     dev_loader = DataLoader(dev_dataset,
                       batch_size=128,
                       shuffle=False,
                       num_workers=4
-                     # pin_memory=True # CUDA only
                      )
 
-
     best_valid_acc = 0.0
+
+    print ("Training model...")
 
     for epoch in range(N_EPOCHS):
 
         train_loss, train_acc = train(CNN_model, train_loader, optimizer, criterion)
-        torch.save(CNN_model.state_dict(), MODEL_PATH)
-        torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
-        if epoch % 2 == 0:
+        if (epoch + 1) % 2 == 0:
             print (f'| Epoch: {epoch+1:02} | Train Loss: {train_loss:.3f} | Train Acc: {train_acc*100:.2f}% |')
             file = open("./losses.txt", "a")
-            file.write("epoch: " + str(epoch) + " train_loss: " + str(train_loss) + '\n')
+            file.write("epoch: " + str(epoch + 1) + " train_loss: " + str(train_loss) + '\n')
 
-        if epoch % 5 == 0:
-            print ("Begin validation")
+        if (epoch + 1) % 100 == 0:
+            print ("Begin validation...")
             valid_loss, valid_acc = evaluate(CNN_model, dev_loader, criterion)
             print (f'| Val. Loss: {valid_loss:.3f} | Val. Acc: {valid_acc*100:.2f}% |')
 
@@ -264,8 +254,7 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
                 torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
                 best_valid_acc = valid_acc
 
-            file = open("./losses.txt", "a")
-            file.write("epoch: " + str(epoch) + " train_loss: " + str(train_loss))
+    print ("Training complete! Best validation accuracy = " + str(best_valid_acc))
 
     return CNN_model
 
