@@ -1,3 +1,4 @@
 data/
 twitter_setup.py
 glove.6B/
+model_cache/

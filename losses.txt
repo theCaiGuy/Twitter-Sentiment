@@ -1,0 +1,7 @@
+epoch: 0 train_loss: 0.8667888564638572
+epoch: 2 train_loss: 0.7979329370035984
+epoch: 0 train_loss: 0.8360663422263495
+epoch: 2 train_loss: 0.7591775378378312
+epoch: 4 train_loss: 0.7436280858398664
+epoch: 0 train_loss: 0.8363641488670123
+epoch: 0 train_loss: 0.8363641488670123
