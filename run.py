@@ -165,9 +165,9 @@ def train(model, train_loader, optimizer, criterion):
 
     for batchnum, batch in enumerate(train_loader):
         #print ("Training on batch #" + str(batchnum))
-        train_x = torch.stack(batch['content'])
+        train_x = torch.stack(batch['content']).cuda()
         #print (train_x.shape)
-        train_y = batch['label'].float()
+        train_y = batch['label'].float().cuda()
         #train_y = batch['label'].long()
         if train_x.shape[1] == 1: continue
         #print (train_y.view(-1).shape)
@@ -198,9 +198,9 @@ def evaluate(model, dev_loader, criterion):
     with torch.no_grad():
 
         for batchnum, batch in enumerate(dev_loader):
-            dev_x = torch.stack(batch['content'])
+            dev_x = torch.stack(batch['content']).cuda()
             #print (train_x)
-            dev_y = batch['label'].float()
+            dev_y = batch['label'].float().cuda()
             predictions = model(dev_x).squeeze(1)
             #print (torch.round(predictions))
             loss = criterion(predictions, dev_y)
