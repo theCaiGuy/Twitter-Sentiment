@@ -32,6 +32,7 @@ import pandas as pd
 import numpy as np
 
 import sklearn
+from sklearn.metrics import f1_score
 
 import string
 import nltk
@@ -157,11 +158,16 @@ def binary_accuracy(preds, y):
     return acc
 
 
+def F1(preds, y):
+    rounded_preds = torch.round(torch.sigmoid(preds))
+    return f1_score(y, rounded_preds)
+
 
 def train(model, train_loader, optimizer, criterion):
 
     epoch_loss = 0
     epoch_acc = 0
+    epoch_f1 = 0
 
     model.train()
 
@@ -181,16 +187,18 @@ def train(model, train_loader, optimizer, criterion):
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
         optimizer.step()
         acc = binary_accuracy(predictions, train_y)
-        optimizer.step()
+        #optimizer.step()
+        f1 = F1(predictions, train_y)
 
         epoch_loss += loss.item()
         epoch_acc += acc.item()
+        epoch_f1 += f1.item()
 
-        print ("| Iteration: " + str(iter + 1) + " | Train Loss: " + str(loss.item()) + " | Train Acc: " + str(acc.item()) + " |")
+        print ("| Iteration: " + str(iter + 1) + " | Train Loss: " + str(loss.item()) + " | Train Acc: " + str(acc.item()) + " | Train F1: " + str(f1.item()) + " |")
         file = open("./train_loss.txt", "a")
-        file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(loss.item())  + " accuracy: " + str(acc.item()) + '\n')
+        file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(loss.item())  + " accuracy: " + str(acc.item()) + " f1: " + str(f1.item())+ '\n')
 
-    return epoch_loss / len(train_loader), epoch_acc / len(train_loader)
+    return epoch_loss / len(train_loader), epoch_acc / len(train_loader), epoch_f1 / len(train_loader)
 
 
 
@@ -211,10 +219,13 @@ def evaluate(model, dev_loader, criterion):
             #print (torch.round(predictions))
             loss = criterion(predictions, dev_y)
             acc = binary_accuracy(predictions, dev_y)
+            f1 = F1(predictions, train_y)
+
             epoch_loss += loss.item()
             epoch_acc += acc.item()
+            epoch_f1 += f1.item()
 
-    return epoch_loss / len(dev_loader), epoch_acc / len(dev_loader)
+    return epoch_loss / len(dev_loader), epoch_acc / len(dev_loader), epoch_f1 / len(train_loader)
 
 
 
@@ -238,7 +249,7 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
                       num_workers=4
                      )
 
-    best_valid_acc = 0.0
+    best_valid_f1 = 0.0
 
     print ("Training model...")
 
@@ -247,23 +258,23 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
 
     for epoch in range(N_EPOCHS):
 
-        train_loss, train_acc = train(CNN_model, train_loader, optimizer, criterion)
+        train_loss, train_acc, train_f1 = train(CNN_model, train_loader, optimizer, criterion)
 
-        print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc))
+        print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc) + ". Average minibatch F1: " + str(train_f1))
 
         print ("Begin validation...")
-        valid_loss, valid_acc = evaluate(CNN_model, dev_loader, criterion)
-        print ("| Val. Loss: " + str(valid_loss) + " | Val. Acc: " + str(valid_acc) + " |")
+        valid_loss, valid_acc, valid_f1 = evaluate(CNN_model, dev_loader, criterion)
+        print ("| Val. Loss: " + str(valid_loss) + " | Val. Acc: " + str(valid_acc) + " | Val. F1: " + str(valid_f1) + " |")
         file = open("./val_loss.txt", "a")
-        file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(valid_loss) + " accuracy: " + str(valid_acc) + '\n')
+        file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(valid_loss) + " accuracy: " + str(valid_acc) + " f1: " + str(valid_f1) + '\n')
 
-        if valid_acc > best_valid_acc:
-            print ("New top validation accuracy achieved! Saving model params...")
+        if valid_f1 > best_valid_f1:
+            print ("New top validation f1 score achieved! Saving model params...")
             torch.save(CNN_model.state_dict(), MODEL_PATH)
             torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
-            best_valid_acc = valid_acc
+            best_valid_f1 = valid_f1
 
-    print ("Training complete! Best validation accuracy = " + str(best_valid_acc))
+    print ("Training complete! Best validation f1 score = " + str(best_valid_f1))
 
     return CNN_model
 
