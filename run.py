@@ -51,7 +51,7 @@ PAD = '<pad>'
 
 TWEET_LEN = 20
 EMBED_LEN = 100
-N_EPOCHS = 1000
+N_EPOCHS = 500
 
 # torch.manual_seed(SEED)
 # torch.cuda.manual_seed(SEED)
@@ -59,6 +59,7 @@ N_EPOCHS = 1000
 
 
 PATH = './data/training.1600000.processed.noemoticon.csv'
+# PATH = './data/train_mini.csv'
 MODEL_PATH = './model_cache/cache'
 
 
@@ -221,13 +222,13 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
     criterion = criterion.to(device)
 
     train_loader = DataLoader(train_dataset,
-                          batch_size=128,
+                          batch_size=2048,
                           shuffle=True,
                           num_workers=4
                          )
 
     dev_loader = DataLoader(dev_dataset,
-                      batch_size=128,
+                      batch_size=2048,
                       shuffle=False,
                       num_workers=4
                      )
@@ -236,16 +237,19 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
 
     print ("Training model...")
 
+    torch.save(CNN_model.state_dict(), MODEL_PATH)
+    torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
+
     for epoch in range(N_EPOCHS):
 
         train_loss, train_acc = train(CNN_model, train_loader, optimizer, criterion)
-        if (epoch + 1) % 2 == 0:
-            print ('| Epoch: ' + str(epoch + 1) + " | Train Loss: " + str(train_loss) + " | Train Acc: " + str(train_acc) + " |")
-            #print (f'| Epoch: {epoch+1:02} | Train Loss: {train_loss:.3f} | Train Acc: {train_acc*100:.2f}% |')
-            file = open("./losses.txt", "a")
-            file.write("epoch: " + str(epoch + 1) + " train_loss: " + str(train_loss) + '\n')
 
-        if (epoch + 1) % 100 == 0:
+        print ('| Epoch: ' + str(epoch + 1) + " | Train Loss: " + str(train_loss) + " | Train Acc: " + str(train_acc) + " |")
+        #print (f'| Epoch: {epoch+1:02} | Train Loss: {train_loss:.3f} | Train Acc: {train_acc*100:.2f}% |')
+        file = open("./losses.txt", "a")
+        file.write("epoch: " + str(epoch + 1) + " train_loss: " + str(train_loss) + '\n')
+
+        if (epoch + 1) % 10 == 0:
             print ("Begin validation...")
             valid_loss, valid_acc = evaluate(CNN_model, dev_loader, criterion)
             #print (f'| Val. Loss: {valid_loss:.3f} | Val. Acc: {valid_acc*100:.2f}% |')
