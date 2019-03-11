@@ -63,8 +63,6 @@ PATH = './data/training.1600000.processed.noemoticon.csv'
 # PATH = './data/train_mini.csv'
 MODEL_PATH = './model_cache/cache'
 
-iter = 0
-
 def vectorize(examples, tok2id):
     vec_examples = []
     for ex in examples:
@@ -159,11 +157,11 @@ def binary_accuracy(preds, y):
 
 
 def F1(preds, y):
-    rounded_preds = torch.round(torch.sigmoid(preds))
+    rounded_preds = torch.round(torch.sigmoid(preds)).detach()
     return f1_score(y, rounded_preds)
 
 
-def train(model, train_loader, optimizer, criterion):
+def train(model, train_loader, optimizer, criterion, iter):
 
     epoch_loss = 0
     epoch_acc = 0
@@ -196,9 +194,10 @@ def train(model, train_loader, optimizer, criterion):
 
         print ("| Iteration: " + str(iter + 1) + " | Train Loss: " + str(loss.item()) + " | Train Acc: " + str(acc.item()) + " | Train F1: " + str(f1.item()) + " |")
         file = open("./train_loss.txt", "a")
-        file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(loss.item())  + " accuracy: " + str(acc.item()) + " f1: " + str(f1.item())+ '\n')
+        file.write(" iter: " + str(iter + 1) + " loss: " + str(loss.item())  + " accuracy: " + str(acc.item()) + " f1: " + str(f1.item())+ '\n')
+        iter += 1
 
-    return epoch_loss / len(train_loader), epoch_acc / len(train_loader), epoch_f1 / len(train_loader)
+    return epoch_loss / len(train_loader), epoch_acc / len(train_loader), epoch_f1 / len(train_loader), iter
 
 
 
@@ -206,6 +205,7 @@ def evaluate(model, dev_loader, criterion):
 
     epoch_loss = 0
     epoch_acc = 0
+    epoch_f1 = 0
 
     model.eval()
 
@@ -219,13 +219,13 @@ def evaluate(model, dev_loader, criterion):
             #print (torch.round(predictions))
             loss = criterion(predictions, dev_y)
             acc = binary_accuracy(predictions, dev_y)
-            f1 = F1(predictions, train_y)
+            f1 = F1(predictions, dev_y)
 
             epoch_loss += loss.item()
             epoch_acc += acc.item()
             epoch_f1 += f1.item()
 
-    return epoch_loss / len(dev_loader), epoch_acc / len(dev_loader), epoch_f1 / len(train_loader)
+    return epoch_loss / len(dev_loader), epoch_acc / len(dev_loader), epoch_f1 / len(dev_loader)
 
 
 
@@ -253,12 +253,16 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
 
     print ("Training model...")
 
+    iter = 0
+
     torch.save(CNN_model.state_dict(), MODEL_PATH)
     torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
 
     for epoch in range(N_EPOCHS):
 
-        train_loss, train_acc, train_f1 = train(CNN_model, train_loader, optimizer, criterion)
+        train_loss, train_acc, train_f1, new_iter = train(CNN_model, train_loader, optimizer, criterion, iter)
+
+        iter += new_iter
 
         print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc) + ". Average minibatch F1: " + str(train_f1))
 
