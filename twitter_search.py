@@ -1,9 +1,12 @@
 #!/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
 
 import twitter_setup
-import twitter
+import requests
+from datetime import datetime
 
-api = twitter.Api(consumer_key=twitter_setup.api_key, consumer_secret=twitter_setup.api_secret, access_token_key=twitter_setup.access_token, access_token_secret=twitter_setup.access_token_secret)
+#api = twitter.Api(consumer_key=twitter_setup.api_key, consumer_secret=twitter_setup.api_secret) #, access_token_key=twitter_setup.access_token, access_token_secret=twitter_setup.access_token_secret)
+auth_tuple = (twitter_setup.api_key, twitter_setup.api_secret)
+base_url = 'https://api.twitter.com/1.1/tweets/search/fullarchive/dev.json'
 
 initial_queries = {'weinstein': 'q="harvey weinstein" since:2017-10-01 until:2017-10-6&src=typd',
 					'spacey': 'q="kevin spacey" since:2017-10-27 until:2017-10-31&src=typd',
@@ -15,14 +18,15 @@ initial_queries = {'weinstein': 'q="harvey weinstein" since:2017-10-01 until:201
 					'lee': 'q="stan lee" since:2018-01-07 until:2018-01-10&src=typd'
 }
 
+
 # Dict containing the names of perpetrators and the most recent search results for them on Twitter
 results = {k: [] for k in initial_queries.keys()}
 
 for (name, query) in initial_queries.items():
-	results[name] = [result.text for result in api.GetSearch(term=name)]
+	results[name] = requests.get(base_url, params={'query': query}, auth=auth_tuple)
 
 	# The following line will run properly once we get our Premium Search API account approved, but for now we substitute the above
 	#results[name] = api.GetSearch(raw_query=query)
 
 print(results)
-	
+
