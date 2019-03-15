@@ -3,3 +3,5 @@ twitter_setup.py
 glove.6B/
 glove.twitter.27B/
 model_cache/
+twitter_keys.yaml
+twees.txt
