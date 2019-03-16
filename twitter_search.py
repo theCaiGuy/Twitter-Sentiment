@@ -17,6 +17,7 @@ initial_queries = {'weinstein': ['harvey weinstein', '2017-09-25', '2017-10-06']
 for (name, query) in initial_queries.items():
 	rule = st.gen_rule_payload(query[0], from_date=query[1], to_date=query[2], results_per_call=100)
 	tweets = st.collect_results(rule, max_results=600, result_stream_args=premium_search_args)
+	tweets = [tweet.all_text for tweet in tweets]
 	
 	# save tweets to a file that can be read into a numpy array of JSON objects later
 	np.savetxt("%s.txt" % name, np.array(tweets), fmt="%s")
