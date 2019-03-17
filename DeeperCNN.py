@@ -26,7 +26,7 @@ class DeepCNN(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(5 * 256, 256)
-        self.relu = nn.ReLU()
+        #self.relu = nn.ReLU()
         self.dropout2 = nn.Dropout(dropout)
         self.fc2 = nn.Linear(256, 1)
         #torch.nn.init.xavier_uniform_(self.fc.weight)
@@ -57,7 +57,7 @@ class DeepCNN(nn.Module):
         # x_cat.shape = (batch_size, 128 * sent_len / 2)
         if print_sizes: print ("x_cat.shape: " + str(x_cat.shape))
 
-        x_fc = self.relu(self.fc(self.dropout(x_cat)))
+        x_fc = self.fc(self.dropout(x_cat))
         # x_fc.shape = (batch_size, 1)
         if print_sizes: print ("x_fc.shape: " + str(x_fc.shape))
 
