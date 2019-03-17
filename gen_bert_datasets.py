@@ -35,10 +35,10 @@ def load_datasets(path):
     dev_y = [0.0 if y == 0 else 1.0 for y in dev_data.loc[:]["Pos_Neg"]]
     #print (dev_y)
 
-    df_train = pd.DataFrame(data = {'id' : [i + 1 for i in range(len(train_y))], 'y' : train_y, 'na' : ['a' for i in range(len(train_y))], 'content' : train_x_raw})
+    df_train = pd.DataFrame(data = {'col1' : [i + 1 for i in range(len(train_y))], 'col2' : train_y, 'col3' : ['a' for i in range(len(train_y))], 'col4' : train_x_raw})
     df_train.to_csv('./train.tsv', sep='\t', index=False, header=False)
 
-    df_dev = pd.DataFrame(data = {'id' : [i + 1 for i in range(len(dev_y))], 'y' : dev_y, 'na' : ['a' for i in range(len(dev_y))], 'content' : dev_x_raw})
+    df_dev = pd.DataFrame(data = {'col1' : [i + 1 for i in range(len(dev_y))], 'col2' : dev_y, 'col3' : ['a' for i in range(len(dev_y))], 'col4' : dev_x_raw})
     df_dev.to_csv('./dev.tsv', sep='\t', index=False, header=False)
 
 load_datasets(PATH)
