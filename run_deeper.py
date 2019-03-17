@@ -51,7 +51,7 @@ PAD = '<pad>'
 
 TWEET_LEN = 20
 EMBED_LEN = 100
-N_EPOCHS = 75
+N_EPOCHS = 100
 
 # torch.manual_seed(SEED)
 # torch.cuda.manual_seed(SEED)
@@ -227,8 +227,15 @@ def evaluate(model, dev_loader, criterion):
     return epoch_loss / len(dev_loader), epoch_acc / len(dev_loader), epoch_f1 / len(dev_loader)
 
 
+def adjust_learning_rate(optimizer, epoch, lr):
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    lr = lr * (0.1 ** (epoch // 30))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
 
 def train_model(train_dataset, dev_dataset, embeddings_matrix):
+    lr = 0.01
     CNN_model = DeepCNN(embeddings_matrix)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     optimizer = optim.Adam(CNN_model.parameters())
@@ -258,7 +265,7 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
     torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
 
     for epoch in range(N_EPOCHS):
-
+        adjust_learning_rate(optimizer, epoch, lr)
         train_loss, train_acc, train_f1, iter = train(CNN_model, train_loader, optimizer, criterion, iter)
 
         print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc) + ". Average minibatch F1: " + str(train_f1))
