@@ -25,18 +25,8 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
-import random
-import os
-import pandas as pd
-import numpy as np
-
 import sklearn
 from sklearn.metrics import f1_score
-
-import string
-import nltk
-from nltk.tokenize import word_tokenize
-nltk.download('punkt')
 
 from TweetDataset import TweetDataset
 from vocab import VocabEntry
