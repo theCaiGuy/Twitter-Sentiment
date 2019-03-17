@@ -20,12 +20,18 @@ class ConvBlock(nn.Module):
         self.conv1 = nn.Conv1d(in_channels = in_channels, out_channels = num_filters, kernel_size = k, bias = True, padding = 2)
         self.batch_norm1 = nn.BatchNorm1d(num_filters)
         self.relu1 = nn.ReLU()
-        #torch.nn.init.xavier_uniform_(self.conv1.weight)
 
         self.conv2 = nn.Conv1d(in_channels = num_filters, out_channels = num_filters, kernel_size = k, bias = True, padding = 2)
         self.batch_norm2 = nn.BatchNorm1d(num_filters)
         self.relu2 = nn.ReLU()
-        #torch.nn.init.xavier_uniform_(self.conv2.weight)
+
+        self.conv3 = nn.Conv1d(in_channels = num_filters, out_channels = num_filters, kernel_size = k, bias = True, padding = 2)
+        self.batch_norm3 = nn.BatchNorm1d(num_filters)
+        self.relu3 = nn.ReLU()
+
+        self.conv4 = nn.Conv1d(in_channels = num_filters, out_channels = num_filters, kernel_size = k, bias = True, padding = 2)
+        self.batch_norm4 = nn.BatchNorm1d(num_filters)
+        self.relu4 = nn.ReLU()
 
         self.pool = nn.MaxPool1d(kernel_size = 2)
 
@@ -40,24 +46,30 @@ class ConvBlock(nn.Module):
         x_conv2 = self.batch_norm2(self.relu2(self.conv2(x_bn)))
         if print_sizes: print (x_conv2.shape)
 
-        x_pool = self.pool(x_conv2)
+        x_conv3 = self.batch_norm3(self.relu3(self.conv3(x_conv2)))
+        if print_sizes: print (x_conv3.shape)
+
+        x_conv4 = self.batch_norm4(self.relu4(self.conv4(x_conv3)))
+        if print_sizes: print (x_conv4.shape)
+
+        x_pool = self.pool(x_conv4)
         # print (x_pool)
         if print_sizes: print(x_pool.shape)
 
         return x_pool
 
-# def test_all():
-#     batch_size = 3
-#     embed_size = 5
-#     sent_len = 6
-#     num_filters = 6
+def test_all():
+    batch_size = 3
+    embed_size = 5
+    sent_len = 6
+    num_filters = 6
+
+    fake_input = torch.tensor(np.zeros((batch_size, embed_size, sent_len)), dtype = torch.float32)
+    block = ConvBlock(embed_size, num_filters)
+    print (block.forward(fake_input, True))
 #
-#     fake_input = torch.tensor(np.zeros((batch_size, embed_size, sent_len)), dtype = torch.float32)
-#     block = ConvBlock(embed_size, num_filters)
-#     print (block.forward(fake_input, True))
 #
-#
-# if __name__ == '__main__':
+if __name__ == '__main__':
 #     #test_intermediate_sizes()
 #     #test_output()
-#     test_all()
+    test_all()
