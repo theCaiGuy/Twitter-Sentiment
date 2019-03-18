@@ -6,9 +6,6 @@ import sklearn.model_selection
 
 import string
 
-from TweetDataset import TweetDataset
-from vocab import VocabEntry
-import string
 
 UNK = '<unk>'
 PAD = '<pad>'
@@ -22,10 +19,12 @@ PATH = './data/training.1600000.processed.noemoticon.csv'
 def load_datasets(path):
     print ("Loading dataset...")
     full_data = pd.read_csv(path, encoding = 'latin-1', names = ["Pos_Neg", "ID", "Date", "QUERY", "User", "Content"])
+    full_data = full_data.sample(n=160000)
     full_n = full_data.shape[0]
+    print (full_data.shape)
     #print (train_data)
 
-    train_data, dev_data = sklearn.model_selection.train_test_split(full_data, test_size = 0.04)
+    train_data, dev_data = sklearn.model_selection.train_test_split(full_data, test_size = 0.10)
 
     # Get ground truth x and y values
     train_x_raw = train_data.loc[:]["Content"]
