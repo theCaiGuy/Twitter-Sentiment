@@ -224,7 +224,7 @@ def adjust_learning_rate(optimizer, epoch, lr):
 
 
 def train_model(train_dataset, dev_dataset, embeddings_matrix):
-    lr = 0.0002
+    lr = 0.00002
     CNN_model = DeepCNN(embeddings_matrix)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     optimizer = optim.Adam(CNN_model.parameters(), lr = lr, weight_decay = 0.001)
