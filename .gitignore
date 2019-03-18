@@ -6,3 +6,4 @@ model_cache/
 twitter_keys.yaml
 twees.txt
 bert/
+bert_output/
