@@ -41,7 +41,7 @@ PAD = '<pad>'
 
 TWEET_LEN = 20
 EMBED_LEN = 100
-N_EPOCHS = 100
+N_EPOCHS = 50
 
 # torch.manual_seed(SEED)
 # torch.cuda.manual_seed(SEED)
@@ -50,7 +50,7 @@ N_EPOCHS = 100
 
 PATH = './data/training.1600000.processed.noemoticon.csv'
 # PATH = './data/train_mini.csv'
-MODEL_PATH = './model_cache/cache_deeper_lr_decay'
+MODEL_PATH = './model_cache/cache_deeper_lr_decay_l2_2'
 
 def vectorize(examples, tok2id):
     vec_examples = []
@@ -182,7 +182,7 @@ def train(model, train_loader, optimizer, criterion, iter):
         epoch_f1 += f1.item()
 
         print ("| Iteration: " + str(iter + 1) + " | Train Loss: " + str(loss.item()) + " | Train Acc: " + str(acc.item()) + " | Train F1: " + str(f1.item()) + " |")
-        file = open("./train_loss_deeper_lr_decay.txt", "a")
+        file = open("./train_loss_deeper_lr_decay_l2.txt", "a")
         file.write(" iter: " + str(iter + 1) + " loss: " + str(loss.item())  + " accuracy: " + str(acc.item()) + " f1: " + str(f1.item())+ '\n')
         iter = iter + 1
 
@@ -224,10 +224,10 @@ def adjust_learning_rate(optimizer, epoch, lr):
 
 
 def train_model(train_dataset, dev_dataset, embeddings_matrix):
-    lr = 0.0002
+    lr = 0.002
     CNN_model = DeepCNN(embeddings_matrix)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    optimizer = optim.Adam(CNN_model.parameters(), lr = lr)
+    optimizer = optim.Adam(CNN_model.parameters(), lr = lr, weight_decay = 0.001)
     criterion = nn.BCEWithLogitsLoss()
     CNN_model = CNN_model.to(device)
     criterion = criterion.to(device)
@@ -254,11 +254,11 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
     torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
 
     for epoch in range(N_EPOCHS):
-        if (epoch + 1) % 20 == 0:
+        if (epoch + 1) % 5 == 0:
             lr = lr / 2.0
             print ("Adjusting learning rate to " + str(lr))
             adjust_learning_rate(optimizer, epoch, lr)
-        
+
         train_loss, train_acc, train_f1, iter = train(CNN_model, train_loader, optimizer, criterion, iter)
 
         print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc) + ". Average minibatch F1: " + str(train_f1))
@@ -266,7 +266,7 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
         print ("Begin validation...")
         valid_loss, valid_acc, valid_f1 = evaluate(CNN_model, dev_loader, criterion)
         print ("| Val. Loss: " + str(valid_loss) + " | Val. Acc: " + str(valid_acc) + " | Val. F1: " + str(valid_f1) + " |")
-        file = open("./val_loss_deeper_lr_decay.txt", "a")
+        file = open("./val_loss_deeper_lr_decay_l2.txt", "a")
         file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(valid_loss) + " accuracy: " + str(valid_acc) + " f1: " + str(valid_f1) + '\n')
 
         if valid_f1 > best_valid_f1:
