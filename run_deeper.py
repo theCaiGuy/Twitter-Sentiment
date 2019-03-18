@@ -265,7 +265,6 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
     torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
 
     for epoch in range(N_EPOCHS):
-        adjust_learning_rate(optimizer, epoch, lr)
         train_loss, train_acc, train_f1, iter = train(CNN_model, train_loader, optimizer, criterion, iter)
 
         print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc) + ". Average minibatch F1: " + str(train_f1))
