@@ -29,10 +29,10 @@ def load_datasets(path):
 
     # Get ground truth x and y values
     train_x_raw = train_data.loc[:]["Content"]
-    train_y = [0.0 if y == 0 else 1.0 for y in train_data.loc[:]["Pos_Neg"]]
+    train_y = [0 if y == 0 else 1 for y in train_data.loc[:]["Pos_Neg"]]
 
     dev_x_raw = dev_data.loc[:]["Content"]
-    dev_y = [0.0 if y == 0 else 1.0 for y in dev_data.loc[:]["Pos_Neg"]]
+    dev_y = [0 if y == 0 else 1 for y in dev_data.loc[:]["Pos_Neg"]]
     #print (dev_y)
 
     df_train = pd.DataFrame(data = {'col1' : [i + 1 for i in range(len(train_y))], 'col2' : train_y, 'col3' : ['a' for i in range(len(train_y))], 'col4' : train_x_raw})

@@ -227,7 +227,7 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
     lr = 0.001
     CNN_model = DeepCNN(embeddings_matrix)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    optimizer = optim.Adam(CNN_model.parameters(), lr = lr, weight_decay = 0.5)
+    optimizer = optim.Adam(CNN_model.parameters(), lr = lr, weight_decay = 0.01)
     criterion = nn.BCEWithLogitsLoss()
     CNN_model = CNN_model.to(device)
     criterion = criterion.to(device)
