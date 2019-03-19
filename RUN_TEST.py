@@ -30,8 +30,8 @@ from sklearn.metrics import f1_score
 
 from TweetDataset import TweetDataset
 from vocab import VocabEntry
-from convblockdeeper import ConvBlock
-from DeeperCNN import DeepCNN
+from convblock import ConvBlock
+from DeepCNN import DeepCNN
 
 import torch.optim as optim
 
@@ -51,7 +51,7 @@ N_EPOCHS = 100
 PATH = './data/training.1600000.processed.noemoticon.csv'
 TEST_PATH = './data/testdata.manual.2009.06.14.csv'
 # PATH = './data/train_mini.csv'
-MODEL_PATH = './model_cache/cache_deeper_lr_decay_l2'
+MODEL_PATH = './model_cache/cache'
 
 def vectorize(examples, tok2id):
     vec_examples = []
@@ -92,14 +92,14 @@ def load_datasets(path):
     full_n = full_data.shape[0]
     #print (train_data)
 
-    train_data, dev_data = sklearn.model_selection.train_test_split(full_data, test_size = 0.04)
+    #train_data, dev_data = sklearn.model_selection.train_test_split(full_data, test_size = 0.04)
 
     # Get ground truth x and y values
-    train_x_raw = train_data.loc[:]["Content"]
-    train_y = [0.0 if y == 0 else 1.0 for y in train_data.loc[:]["Pos_Neg"]]
+    #train_x_raw = train_data.loc[:]["Content"]
+    #train_y = [0.0 if y == 0 else 1.0 for y in train_data.loc[:]["Pos_Neg"]]
 
-    dev_x_raw = dev_data.loc[:]["Content"]
-    dev_y = [0.0 if y == 0 else 1.0 for y in dev_data.loc[:]["Pos_Neg"]]
+    #dev_x_raw = dev_data.loc[:]["Content"]
+    #dev_y = [0.0 if y == 0 else 1.0 for y in dev_data.loc[:]["Pos_Neg"]]
     #print (dev_y)
 
     test_data = pd.read_csv(TEST_PATH, encoding = 'latin-1', names = ["Pos_Neg", "ID", "Date", "QUERY", "User", "Content"])
@@ -108,8 +108,8 @@ def load_datasets(path):
     test_y = [0.0 if y == 0 else 1.0 for y in test_data.loc[:]["Pos_Neg"]]
 
 
-    print (test_x_raw)
-    print (test_y)
+    #print (test_x_raw)
+    #print (test_y)
 
     print ("Loading character vectors...")
     char_vectors = {}
@@ -130,16 +130,17 @@ def load_datasets(path):
     tok2id[PAD] = len(tok2id)
 
     print ("Generating dataset objects...")
-    train_x = vectorize(train_x_raw, tok2id)
+    #train_x = vectorize(train_x_raw, tok2id)
 
-    dev_x = vectorize(dev_x_raw, tok2id)
+    #dev_x = vectorize(dev_x_raw, tok2id)
 
-    train_dataset = TweetDataset(train_x, train_y)
-    dev_dataset = TweetDataset(dev_x, dev_y)
-
+    #train_dataset = TweetDataset(train_x, train_y)
+    #dev_dataset = TweetDataset(dev_x, dev_y)
+    test_x = vectorize(test_x_raw, tok2id)
+    test_dataset = TweetDataset(test_x, test_y)
     embeddings = build_embeddings(tok2id, char_vectors)
 
-    return train_dataset, dev_dataset, embeddings
+    return test_dataset, embeddings
 
 
 
@@ -152,6 +153,7 @@ def binary_accuracy(preds, y):
     rounded_preds = torch.round(torch.sigmoid(preds))
     correct = (rounded_preds == y).float() #convert into float for division
     acc = correct.sum()/len(correct)
+    print (rounded_preds)
     return acc
 
 
@@ -233,22 +235,23 @@ def adjust_learning_rate(optimizer, epoch, lr):
         param_group['lr'] = lr
 
 
-def train_model(train_dataset, dev_dataset, embeddings_matrix):
-    lr = 0.001
+def train_model(test_dataset, embeddings_matrix):
+  #  lr = 0.001
     CNN_model = DeepCNN(embeddings_matrix)
+    CNN_model.load_state_dict(torch.load(MODEL_PATH))
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    optimizer = optim.Adam(CNN_model.parameters(), lr = lr, weight_decay = 0.01)
+   # optimizer = optim.Adam(CNN_model.parameters(), lr = lr, weight_decay = 0.01)
     criterion = nn.BCEWithLogitsLoss()
     CNN_model = CNN_model.to(device)
     criterion = criterion.to(device)
 
-    train_loader = DataLoader(train_dataset,
-                          batch_size=2048,
-                          shuffle=True,
-                          num_workers=4
-                         )
+   # train_loader = DataLoader(train_dataset,
+    #                      batch_size=2048,
+     #                     shuffle=True,
+      #                    num_workers=4
+       #                  )
 
-    dev_loader = DataLoader(dev_dataset,
+    test_loader = DataLoader(test_dataset,
                       batch_size=2048,
                       shuffle=False,
                       num_workers=4
@@ -256,38 +259,40 @@ def train_model(train_dataset, dev_dataset, embeddings_matrix):
 
     best_valid_f1 = 0.0
 
-    print ("Training model...")
+    print ("Testing model...")
 
     iter = 0
 
-    torch.save(CNN_model.state_dict(), MODEL_PATH)
-    torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
+    #torch.save(CNN_model.state_dict(), MODEL_PATH)
+    #torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
 
-    for epoch in range(N_EPOCHS):
-        if (epoch + 1) % 30 == 0:
-            lr = lr / 2.0
-            adjust_learning_rate(optimizer, epoch, lr)
+    #for epoch in range(N_EPOCHS):
+     #   if (epoch + 1) % 30 == 0:
+      #      lr = lr / 2.0
+       #     adjust_learning_rate(optimizer, epoch, lr)
 
-        train_loss, train_acc, train_f1, iter = train(CNN_model, train_loader, optimizer, criterion, iter)
+       # train_loss, train_acc, train_f1, iter = train(CNN_model, train_loader, optimizer, criterion, iter)
 
-        print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc) + ". Average minibatch F1: " + str(train_f1))
+        #print ('Epoch ' + str(epoch + 1) + " completed. Average minibatch train loss: " + str(train_loss) + ". Average minibatch train acc: " + str(train_acc) + ". Average minibatch F1: " + str(train_f1))
 
-        print ("Begin validation...")
-        valid_loss, valid_acc, valid_f1 = evaluate(CNN_model, dev_loader, criterion)
-        print ("| Val. Loss: " + str(valid_loss) + " | Val. Acc: " + str(valid_acc) + " | Val. F1: " + str(valid_f1) + " |")
-        file = open("./val_loss_deeper_lr_decay_l2.txt", "a")
-        file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(valid_loss) + " accuracy: " + str(valid_acc) + " f1: " + str(valid_f1) + '\n')
+       # print ("Begin validation...")
+    valid_loss, valid_acc, valid_f1 = evaluate(CNN_model, test_loader, criterion)
+    print ("| Val. Loss: " + str(valid_loss) + " | Val. Acc: " + str(valid_acc) + " | Val. F1: " + str(valid_f1) + " |")
+    #    file = open("./val_loss_deeper_lr_decay_l2.txt", "a")
+     #   file.write("epoch: " + str(epoch + 1) + " iter: " + str(iter + 1) + " loss: " + str(valid_loss) + " accuracy: " + str(valid_acc) + " f1: " + str(valid_f1) + '\n')
 
-        if valid_f1 > best_valid_f1:
-            print ("New top validation f1 score achieved! Saving model params...")
-            torch.save(CNN_model.state_dict(), MODEL_PATH)
-            torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
-            best_valid_f1 = valid_f1
+      #  if valid_f1 > best_valid_f1:
+       #     print ("New top validation f1 score achieved! Saving model params...")
+        #    torch.save(CNN_model.state_dict(), MODEL_PATH)
+         #   torch.save(optimizer.state_dict(), MODEL_PATH + '.optim')
+          #  best_valid_f1 = valid_f1
 
-    print ("Training complete! Best validation f1 score = " + str(best_valid_f1))
+    #print ("Training complete! Best validation f1 score = " + str(best_valid_f1))
 
     return CNN_model
 
 if __name__ == '__main__':
-    train_dataset, dev_dataset, embeddings_matrix = load_datasets(PATH)
+    test_dataset, embeddings_matrix = load_datasets(PATH)
+    print (test_dataset)
+    _ = train_model(test_dataset, embeddings_matrix)
 #    CNN_model = train_model(train_dataset, dev_dataset, embeddings_matrix)
