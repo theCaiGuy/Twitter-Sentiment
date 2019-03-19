@@ -11,9 +11,11 @@ PATH_3 = './deeper_lr_decay_data'
 PATH_4 = './deeper_l2_data'
 PATH_5 = './deeper_l2_no_decay_2'
 PATH_6 = './deeper_data'
+PATH_7 = './deeper_l2_lr_decay_data'
+PATH_8 = './twitter_l2_Data'
 
-data_1_train = open(PATH_6 + '/train_loss_deeper.txt', 'r')
-data_1_val = open(PATH_6 + '/val_loss_deeper.txt', 'r')
+data_1_train = open(PATH_8 + '/train_loss.txt', 'r')
+data_1_val = open(PATH_8 + '/val_loss.txt', 'r')
 
 train_iters = []
 train_loss = []
